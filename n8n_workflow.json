@@ -1,0 +1,149 @@
+{
+  "name": "IEG CRM Backend",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "action",
+              "value": "={{$json[\"body\"][\"action\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Action",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$node[\"Set Action\"].json[\"action\"]}}",
+              "operation": "equal",
+              "value2": "GET_DATA"
+            },
+            {
+              "value1": "={{$node[\"Set Action\"].json[\"action\"]}}",
+              "operation": "equal",
+              "value2": "SAVE_CUSTOMER"
+            },
+            {
+              "value1": "={{$node[\"Set Action\"].json[\"action\"]}}",
+              "operation": "equal",
+              "value2": "EXPORT_DOCS"
+            }
+          ]
+        }
+      },
+      "name": "Switch Router",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "Sales!A:Z",
+        "options": {}
+      },
+      "name": "Read Sales Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [750, 100],
+      "credentials": {
+        "googleApi": {
+          "id": "1",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "Customers!A:Z",
+        "options": {}
+      },
+      "name": "Save Customer",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "content": "={{$json[\"body\"][\"reportContent\"]}}",
+        "title": "={{$json[\"body\"][\"reportTitle\"]}}",
+        "options": {}
+      },
+      "name": "Create Doc",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 1,
+      "position": [750, 500]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Set Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Action": {
+      "main": [
+        [
+          {
+            "node": "Switch Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Router": {
+      "main": [
+        [
+          {
+            "node": "Read Sales Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
